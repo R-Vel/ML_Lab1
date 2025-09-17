@@ -9,9 +9,10 @@ from sklearn.utils.validation import check_is_fitted
 
 class FraudDetector(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, random_state: int = 39, n_jobs: Optional[int] = None):
+    def __init__(self, resample, random_state: int = 39, n_jobs: Optional[int] = None):
         self.random_state = random_state
         self.n_jobs = n_jobs
+        self.resample = resample #not sure if this is allowed; resample (str): specific resampling method
         self._model_ = RandomForestClassifier(
             n_estimators=500,
             n_jobs=self.n_jobs,
@@ -65,7 +66,68 @@ class FraudDetector(BaseEstimator, ClassifierMixin):
         self,
         X: Union[np.ndarray, pd.DataFrame],
         y: Union[np.ndarray, pd.Series],
-    ):
+        ):
+        
+        """
+        Select the resampling method
+
+        Parameters:
+        -----------
+        X (np.ndarray | pd.DataFrame): The training data
+        y (np.ndarray | pd.Sereis): The corresponding targets
+        """
+
+        if self.resample == "undersample":
+            return self._undersample(X, y)
+
+    def _undersample(
+        self,
+        X: Union[np.ndarray, pd.DataFrame],
+        y: Union[np.ndarray, pd.Series],
+        ):
+        
+        """
+        Perform undersampling on training X and y
+
+        Parameters:
+        -----------
+        X (np.ndarray | pd.DataFrame): The training data
+        y (np.ndarray | pd.Sereis): The corresponding targets
+        """
+
+        #set target column name 
+        col = y.name
+        
+        # create temporary df of X and y
+        df = pd.concat([X.reset_index(drop=True), 
+                        y.reset_index(drop=True)], 
+                       axis=1)
+
+        print(df)
+        
+        # Get the label with the most count and use it to filter df 
+        value_counts = df[col].value_counts()
+        print(value_counts)
+        majority_label = value_counts.idxmax()
+    
+        mask = df[col] == majority_label
+        majority = df[mask]
+        minority = df[~mask]
+    
+        # We don't include replacement, because we want to avoid duplicates when downsampling
+        downsample = majority.sample(n=int(value_counts.min()), replace=False, random_state=random_state)
+        final_df = pd.concat([downsample, minority])
+    
+        if shuffle:
+            final_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+        else:
+            final_df.reset_index(drop=True)
+
+        X = final_df.drop("col", axis=1)
+        y = final_df[col]
+
+        print(final_df.shape)
+
         return X, y
 
     #### END MODIFY THIS METHOD
