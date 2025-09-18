@@ -15,7 +15,7 @@ from collections import Counter
 
 class FraudDetector(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, resample, random_state: int = 39, n_jobs: Optional[int] = None):
+    def __init__(self, resample = None, random_state: int = 39, n_jobs: Optional[int] = None):
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.resample = resample #not sure if this is allowed; resample (str): specific resampling method
@@ -83,17 +83,19 @@ class FraudDetector(BaseEstimator, ClassifierMixin):
         y (np.ndarray | pd.Sereis): The corresponding targets
         """
 
-        if self.resample == "undersample":
-            rus = RandomUnderSampler(random_state=self.random_state)
-            X_us, y_us = rus.fit_resample(X, y)
-            print(Counter(y), Counter(y_us))
-            return X_us, y_us
+#        if self.resample == "undersample":
+#            rus = RandomUnderSampler(random_state=self.random_state)
+#            X_train_us, y_train_us = rus.fit_resample(X_train, y_train)
+#            print(Counter(y), Counter(y_train_us))
+#            return X_train_us, y_train_us
 
-        if self.resample == "oversample":
-            ros = RandomOverSampler(random_state=self.random_state)
-            X_os, y_os = ros.fit_resample(X, y)
-            print(Counter(y), Counter(y_os))
-            return X_os, y_os
+#        if self.resample == "oversample":
+#            ros = RandomOverSampler(random_state=self.random_state)
+#            X_train_os, y_train_os = ros.fit_resample(X_train, y_train)
+#            print(Counter(y), Counter(y_train_os))
+#            return X_train_os, y_train_os
+
+        return X, y
 
     #### END MODIFY THIS METHOD
 

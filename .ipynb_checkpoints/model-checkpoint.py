@@ -6,19 +6,12 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.validation import check_is_fitted
 
-#not sure if this is allowed
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import RandomOverSampler
-
-#temporary
-from collections import Counter
 
 class FraudDetector(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, resample, random_state: int = 39, n_jobs: Optional[int] = None):
+    def __init__(self, random_state: int = 39, n_jobs: Optional[int] = None):
         self.random_state = random_state
         self.n_jobs = n_jobs
-        self.resample = resample #not sure if this is allowed; resample (str): specific resampling method
         self._model_ = RandomForestClassifier(
             n_estimators=500,
             n_jobs=self.n_jobs,
@@ -67,33 +60,8 @@ class FraudDetector(BaseEstimator, ClassifierMixin):
     #### method.
     #### You can modify the parameters here, but ensure that these are reflected
     #### within the fit method
-    
-    def _handle_imbalance(
-        self,
-        X: Union[np.ndarray, pd.DataFrame],
-        y: Union[np.ndarray, pd.Series],
-        ):
-        
-        """
-        Select the resampling method
-
-        Parameters:
-        -----------
-        X (np.ndarray | pd.DataFrame): The training data
-        y (np.ndarray | pd.Sereis): The corresponding targets
-        """
-
-        if self.resample == "undersample":
-            rus = RandomUnderSampler(random_state=self.random_state)
-            X_us, y_us = rus.fit_resample(X, y)
-            print(Counter(y), Counter(y_us))
-            return X_us, y_us
-
-        if self.resample == "oversample":
-            ros = RandomOverSampler(random_state=self.random_state)
-            X_os, y_os = ros.fit_resample(X, y)
-            print(Counter(y), Counter(y_os))
-            return X_os, y_os
+    def _handle_imbalance(self, X, y):
+        return X, y
 
     #### END MODIFY THIS METHOD
 
