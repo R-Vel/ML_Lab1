@@ -6,6 +6,12 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.validation import check_is_fitted
 
+#not sure if this is allowed
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
+
+#temporary
+from collections import Counter
 
 class FraudDetector(BaseEstimator, ClassifierMixin):
 
@@ -78,57 +84,16 @@ class FraudDetector(BaseEstimator, ClassifierMixin):
         """
 
         if self.resample == "undersample":
-            return self._undersample(X, y)
+            rus = RandomUnderSampler(random_state=self.random_state)
+            X_us, y_us = rus.fit_resample(X, y)
+            print(Counter(y), Counter(y_us))
+            return X_us, y_us
 
-    def _undersample(
-        self,
-        X: Union[np.ndarray, pd.DataFrame],
-        y: Union[np.ndarray, pd.Series],
-        ):
-        
-        """
-        Perform undersampling on training X and y
-
-        Parameters:
-        -----------
-        X (np.ndarray | pd.DataFrame): The training data
-        y (np.ndarray | pd.Sereis): The corresponding targets
-        """
-
-        #set target column name 
-        col = y.name
-        
-        # create temporary df of X and y
-        df = pd.concat([X.reset_index(drop=True), 
-                        y.reset_index(drop=True)], 
-                       axis=1)
-
-        print(df)
-        
-        # Get the label with the most count and use it to filter df 
-        value_counts = df[col].value_counts()
-        print(value_counts)
-        majority_label = value_counts.idxmax()
-    
-        mask = df[col] == majority_label
-        majority = df[mask]
-        minority = df[~mask]
-    
-        # We don't include replacement, because we want to avoid duplicates when downsampling
-        downsample = majority.sample(n=int(value_counts.min()), replace=False, random_state=random_state)
-        final_df = pd.concat([downsample, minority])
-    
-        if shuffle:
-            final_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
-        else:
-            final_df.reset_index(drop=True)
-
-        X = final_df.drop("col", axis=1)
-        y = final_df[col]
-
-        print(final_df.shape)
-
-        return X, y
+        if self.resample == "oversample":
+            ros = RandomOverSampler(random_state=self.random_state)
+            X_os, y_os = ros.fit_resample(X, y)
+            print(Counter(y), Counter(y_os))
+            return X_os, y_os
 
     #### END MODIFY THIS METHOD
 
