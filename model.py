@@ -6,19 +6,15 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.validation import check_is_fitted
 
-#not sure if this is allowed
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import RandomOverSampler
-
-#temporary
 from collections import Counter
+
+from imblearn.over_sampling import SMOTE
 
 class FraudDetector(BaseEstimator, ClassifierMixin):
 
-    def __init__(self, resample = None, random_state: int = 39, n_jobs: Optional[int] = None):
+    def __init__(self, random_state: int = 39, n_jobs: Optional[int] = None):
         self.random_state = random_state
         self.n_jobs = n_jobs
-        self.resample = resample #not sure if this is allowed; resample (str): specific resampling method
         self._model_ = RandomForestClassifier(
             n_estimators=500,
             n_jobs=self.n_jobs,
@@ -61,43 +57,31 @@ class FraudDetector(BaseEstimator, ClassifierMixin):
         X. Note that this would give the predicted labels during training.
         """
         return self.fit(X, y).predict(X)
-
-    #### START MODIFY THIS METHOD
-    #### Ensure docstrings and missing type annotations are found in this
-    #### method.
-    #### You can modify the parameters here, but ensure that these are reflected
-    #### within the fit method
     
     def _handle_imbalance(
         self,
         X: Union[np.ndarray, pd.DataFrame],
         y: Union[np.ndarray, pd.Series],
-        ):
+        ) -> np.ndarray :
         
         """
-        Select the resampling method
+        Apply SMOTE with 13 nearest neighbors to balance class distribution
 
         Parameters:
         -----------
         X (np.ndarray | pd.DataFrame): The training data
         y (np.ndarray | pd.Sereis): The corresponding targets
+
+        Returns
+        -------
+        X_train_smote (np.ndarray) : Resampled training data with synthetic minority class datapoints
+        y_train_smote (np.ndarray) : The corresponding targets
         """
 
-#        if self.resample == "undersample":
-#            rus = RandomUnderSampler(random_state=self.random_state)
-#            X_train_us, y_train_us = rus.fit_resample(X_train, y_train)
-#            print(Counter(y), Counter(y_train_us))
-#            return X_train_us, y_train_us
+        smote = SMOTE(random_state=self.random_state, 
+                      k_neighbors=13,
+                      sampling_strategy=0.2)
+        X_train_smote, y_train_smote = smote.fit_resample(X, y)
+        print(Counter(y), Counter(y_train_smote))
 
-#        if self.resample == "oversample":
-#            ros = RandomOverSampler(random_state=self.random_state)
-#            X_train_os, y_train_os = ros.fit_resample(X_train, y_train)
-#            print(Counter(y), Counter(y_train_os))
-#            return X_train_os, y_train_os
-
-        return X, y
-
-    #### END MODIFY THIS METHOD
-
-    ### CREATE HELPER METHODS IF NEEDED FOR  _handle_imbalance METHOD
-    ### NOTE THAT THE METHODS YOU CREATE SHOULD START WITH AN UNDERSCORE (_)
+        return X_train_smote, y_train_smote
